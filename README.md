@@ -20,7 +20,8 @@ It checks selected TCP ports, identifies only likely services from conventional 
 
 - Windows with Python 3.12 or newer.
 - The project-local `.venv` at `.venv\Scripts\python.exe`.
-- Requests, installed only in that virtual environment from `requirements.txt`.
+- Requests and Flask, installed only in that virtual environment from `requirements.txt`.
+- Gunicorn is included for the Linux-hosted Render demo; it is not used by the local Windows launcher.
 
 Beautiful Soup is not installed because this version checks response headers and `Set-Cookie` attributes without parsing response HTML. Python's standard library covers IP validation, sockets, SQLite, JSON, HTML escaping, and testing.
 
@@ -50,6 +51,15 @@ The active safe configurations are:
 
 Example templates are stored beside them as `app_settings.example.json` and `approved_targets.example.json`. The application validates configuration before network activity and independently rejects any non-loopback target or DNS answer.
 
+After cloning the public repository, create local-only active configuration files from the examples:
+
+```powershell
+Copy-Item config\app_settings.example.json config\app_settings.json
+Copy-Item config\approved_targets.example.json config\approved_targets.json
+```
+
+The active files are ignored by Git and are not required by the hosted demonstration.
+
 ## Running an assessment
 
 Use the project-local interpreter:
@@ -68,24 +78,66 @@ The CLI validates and resolves the allowlisted target before displaying the orig
 
 The web module sends one bounded GET per configured scheme/port/address and follows at most three redirects manually. Each redirect is checked against the same project-local allowlist and loopback restriction before it is followed.
 
-## Data and reports
+## Local web application
 
-- SQLite database: `data\cybersecurity_assessment.db` (created on first confirmed run).
-- JSON and HTML reports: `reports\assessment-<id>.json` and `.html`.
+The Flask interface is a separate presentation layer over the existing scope validation, assessment workflow, database, and reporting modules. It does not replace the CLI or add assessment methods.
+
+Install the project's requirements in the existing virtual environment when Flask is not installed yet:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Start the application from the project root:
+
+```powershell
+.\run_web.ps1
+```
+
+Open [http://127.0.0.1:5000](http://127.0.0.1:5000) in Chrome. The server binds only to `127.0.0.1`; it does not bind to `0.0.0.0`. Press `Ctrl+C` in the PowerShell window to stop it.
+
+If PowerShell's execution policy prevents running the launcher, start the same loopback-only entry point directly:
+
+```powershell
+$env:PYTHONPATH = ".\src"
+.\.venv\Scripts\python.exe -m cyber_assessment.web
+```
+
+The dashboard, history, findings, and report pages are read-only. Starting an assessment requires a POST form submission, validation against the existing target allowlist, and a separate review page that displays the original target, resolved approved IPs, methods, ports, and restrictions. The confirmation is one-time, expires after five minutes, and passes the already validated scope to the existing CLI assessment workflow. TLS verification, redirect scope checks, and loopback-only rules remain unchanged.
+
+The local interface uses CSRF tokens, loopback client checks, trusted local hostnames, context-escaped Jinja templates, and a sandboxed HTML report preview. It does not expose database file paths, arbitrary file reads, credentials, raw cookie values, or response bodies.
+
+## Public demonstration on Render
+
+The Render deployment is a **read-only demonstration**, separate from the local assessment application:
+
+- It displays fixed, synthetic examples marked as sample data; they are not real findings or assessment history.
+- It does not load the project configuration, SQLite database, local reports, or environment files.
+- Assessment POST routes and all report-view/download routes are disabled in hosted mode.
+- The target-validation and assessment workflow remains available only in the local application and retains its loopback-only restrictions.
+- The hosted service listens on `0.0.0.0:$PORT` behind Render's service boundary. Do not use the Gunicorn command to expose a local assessment instance.
+
+The repository includes [`render.yaml`](render.yaml). In Render, create a new Blueprint from this repository and review the service settings before applying them. The blueprint sets hosted-demo mode, generates a session secret, and configures `/healthz` as the health check. Render must report a successful deployment before the application can be considered live.
+
+Render build command:
+
+```text
+python -m pip install -r requirements.txt
+```
+
+Render start command:
+
+```text
+gunicorn --chdir src --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 30 cyber_assessment.web.wsgi:app
+```
+
+## Local data and reports
+
+- SQLite database: `data\cybersecurity_assessment.db` (created on first confirmed local run).
+- JSON and HTML reports: `reports\assessment-<id>.json` and `.html` (local only).
 
 Use `--reports-dir PATH` only for an output directory inside this project. HTML values are escaped at render time; stored observation validation is not treated as output encoding.
-Open the generated `.html` report in a browser to review the human-readable results. JSON output can be opened in an editor or parsed by another local tool.
-
-## Project documentation
-
-- [Project proposal](documentation/PROJECT_PROPOSAL.md)
-- [System architecture](documentation/SYSTEM_ARCHITECTURE.md)
-- [Research document](documentation/RESEARCH_DOCUMENT.md)
-- [Technical report](documentation/TECHNICAL_REPORT.md)
-- [User guide](documentation/USER_GUIDE.md)
-- [Test results](documentation/TEST_RESULTS.md)
-
-The controlled assessment of `127.0.0.1` completed with status `partial` after the verified local test server was restarted. Port 8000 was open and returned HTTP 200; three TCP ports remained filtered/unknown and three web checks failed or timed out. See the [technical report](documentation/TECHNICAL_REPORT.md), [test results](documentation/TEST_RESULTS.md), and actual [JSON](reports/assessment-5a3010c1-d971-498f-b3c4-cb273aefb93d.json) and [HTML](reports/assessment-5a3010c1-d971-498f-b3c4-cb273aefb93d.html) reports. These are limited observations, not proof of vulnerability.
+Open a locally generated `.html` report in a browser to review the human-readable results. The database, generated reports, active configuration, and real assessment history are excluded from Git and are never loaded by the hosted demo.
 
 ## Tests
 

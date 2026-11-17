@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Assessment history | CyberAssess Local{% endblock %}
+{% block breadcrumb %}HISTORY{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">{% if hosted_demo %}SAMPLE RECORDS{% else %}PROJECT DATABASE{% endif %}</p><h1>Assessment history</h1><p class="lede">{% if hosted_demo %}Illustrative records only; no real assessment history is available in the public demo.{% else %}Recent records from the dedicated project SQLite database.{% endif %}</p></div>
+  <a class="button button-primary" href="{{ url_for('new_assessment') }}">New assessment</a>
+</div>
+
+{% if assessments %}
+  <div class="table-wrap">
+    <table><thead><tr><th>Assessment ID</th><th>Target</th><th>Status</th><th>Started</th><th>Completed</th><th></th></tr></thead>
+      <tbody>{% for item in assessments %}
+        <tr><td><code>{{ item.assessment_id }}</code></td><td><strong>{{ item.requested_target }}</strong><small class="table-subtext">{{ item.canonical_target }} / {{ item.target_kind }}</small></td><td><span class="status-pill status-{{ item.status }}">{{ item.status|replace('_', ' ') }}</span></td><td class="muted">{{ item.started_at }}</td><td class="muted">{{ item.finished_at or 'In progress' }}</td><td><a class="table-link" href="{{ url_for('assessment_result', assessment_id=item.assessment_id) }}">Open</a></td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty-state"><span class="empty-mark" aria-hidden="true">--</span><h2>No stored assessments</h2><p>Assessment history will appear after an explicitly confirmed run.</p></div>
+{% endif %}
+{% endblock %}

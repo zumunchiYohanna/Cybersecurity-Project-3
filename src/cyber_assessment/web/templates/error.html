@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} | CyberAssess Local{% endblock %}
+{% block breadcrumb %}REQUEST STATUS{% endblock %}
+{% block content %}
+<div class="error-panel">
+  <span class="error-code">{{ "%03d"|format(status_code) }}</span>
+  <p class="eyebrow">REQUEST NOT COMPLETED</p>
+  <h1>{{ title }}</h1>
+  <p class="lede">{{ message }}</p>
+  <a class="button button-secondary" href="{{ url_for('dashboard') }}">Return to dashboard</a>
+</div>
+{% endblock %}

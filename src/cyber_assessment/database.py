@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Generator
 
 from .config import PROJECT_ROOT
-from .errors import PersistenceError, ScopeDeniedError
+from .errors import AssessmentNotFoundError, PersistenceError, ScopeDeniedError
 from .models import (
     AssessmentScope,
     Finding,
@@ -423,7 +423,7 @@ class AssessmentDatabase:
                     "SELECT * FROM assessments WHERE assessment_id=?", (assessment_id,)
                 ).fetchone()
                 if assessment is None:
-                    raise PersistenceError("Assessment does not exist.")
+                    raise AssessmentNotFoundError("Assessment does not exist.")
                 modules = connection.execute(
                     "SELECT * FROM module_runs WHERE assessment_id=? ORDER BY module_name",
                     (assessment_id,),
@@ -470,3 +470,87 @@ class AssessmentDatabase:
                 for row in findings
             ],
         }
+
+    def list_assessments(self, limit: int = 100) -> list[dict[str, object]]:
+        """Return a bounded, non-sensitive summary of recent assessments."""
+        if type(limit) is not int or not 1 <= limit <= 500:
+            raise ValueError("Assessment list limit must be an integer from 1 to 500.")
+        try:
+            with self._transaction() as connection:
+                rows = connection.execute(
+                    """SELECT assessment_id, requested_target, canonical_target, target_kind,
+                              started_at, finished_at, status
+                       FROM assessments
+                       ORDER BY started_at DESC, assessment_id DESC
+                       LIMIT ?""",
+                    (limit,),
+                ).fetchall()
+        except sqlite3.Error as exc:
+            raise PersistenceError(f"Could not list assessments: {exc}") from exc
+        return [dict(row) for row in rows]
+
+    def get_dashboard_summary(self) -> dict[str, object]:
+        """Return aggregate counts and the latest assessment for the dashboard."""
+        severities = ("informational", "low", "medium", "high")
+        try:
+            with self._transaction() as connection:
+                total = connection.execute("SELECT COUNT(*) FROM assessments").fetchone()[0]
+                latest = connection.execute(
+                    """SELECT assessment_id, requested_target, canonical_target,
+                              started_at, finished_at, status
+                       FROM assessments
+                       ORDER BY started_at DESC, assessment_id DESC
+                       LIMIT 1"""
+                ).fetchone()
+                rows = connection.execute(
+                    "SELECT severity, COUNT(*) AS total FROM findings GROUP BY severity"
+                ).fetchall()
+        except sqlite3.Error as exc:
+            raise PersistenceError(f"Could not load the dashboard summary: {exc}") from exc
+        findings_by_severity = {severity: 0 for severity in severities}
+        findings_by_severity.update({row["severity"]: row["total"] for row in rows})
+        return {
+            "total_assessments": total,
+            "latest_assessment": dict(latest) if latest is not None else None,
+            "findings_by_severity": findings_by_severity,
+        }
+
+    def list_findings(
+        self,
+        severity: str | None = None,
+        limit: int = 300,
+    ) -> list[dict[str, object]]:
+        """Return bounded finding details, optionally filtered by known severity."""
+        if type(limit) is not int or not 1 <= limit <= 1000:
+            raise ValueError("Finding list limit must be an integer from 1 to 1000.")
+        allowed_severities = {"informational", "low", "medium", "high"}
+        if severity is not None and severity not in allowed_severities:
+            raise ValueError("Finding severity is not supported.")
+
+        query = """SELECT f.finding_id, f.assessment_id, a.requested_target,
+                          f.port_result_id, f.web_result_id, f.severity, f.confidence,
+                          f.category, f.title, f.description, f.evidence_json,
+                          f.recommendation, f.created_at
+                   FROM findings AS f
+                   JOIN assessments AS a ON a.assessment_id = f.assessment_id"""
+        parameters: list[object] = []
+        if severity is not None:
+            query += " WHERE f.severity = ?"
+            parameters.append(severity)
+        query += " ORDER BY f.created_at DESC, f.finding_id DESC LIMIT ?"
+        parameters.append(limit)
+        try:
+            with self._transaction() as connection:
+                rows = connection.execute(query, parameters).fetchall()
+        except sqlite3.Error as exc:
+            raise PersistenceError(f"Could not list findings: {exc}") from exc
+
+        findings: list[dict[str, object]] = []
+        try:
+            for row in rows:
+                finding = dict(row)
+                finding["evidence"] = json.loads(finding.pop("evidence_json"))
+                findings.append(finding)
+        except (TypeError, json.JSONDecodeError) as exc:
+            raise PersistenceError("Stored finding evidence is invalid.") from exc
+        return findings

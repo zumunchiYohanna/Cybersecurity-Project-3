@@ -1,0 +1,12 @@
+{
+  "approved_ports": [80, 443, 8000, 8080],
+  "web_ports": {
+    "http": [80, 8000, 8080],
+    "https": [443]
+  },
+  "connect_timeout_seconds": 1.5,
+  "request_timeout_seconds": 2.0,
+  "minimum_delay_seconds": 0.25,
+  "max_redirects": 3,
+  "user_agent": "Cybersecurity-Project-3/0.1 (localhost-only educational assessment)"
+}

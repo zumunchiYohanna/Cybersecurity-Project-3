@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Assessment {{ data.assessment.assessment_id }} | CyberAssess Local{% endblock %}
+{% block breadcrumb %}ASSESSMENT RESULTS{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">ASSESSMENT {{ data.assessment.assessment_id }}</p>
+    <h1>Assessment results</h1>
+    <p class="lede">Observed results for <strong>{{ data.assessment.requested_target }}</strong>. Interpret timeouts as unknown, not as closed ports.</p>
+  </div>
+  <span class="status-pill status-{{ data.assessment.status }} status-large">{{ data.assessment.status|replace('_', ' ') }}</span>
+</div>
+
+<section class="panel">
+  <div class="section-heading"><div><p class="eyebrow">VALIDATED SCOPE</p><h2>Assessment details</h2></div></div>
+  <dl class="scope-details scope-details-compact">
+    <div><dt>Requested target</dt><dd>{{ data.assessment.requested_target }}</dd></div>
+    <div><dt>Canonical target</dt><dd>{{ data.assessment.canonical_target }}</dd></div>
+    <div><dt>Approved IP addresses</dt><dd>{% for item in data.resolved_addresses %}<span class="ip-chip">{{ item.ip_address }}</span>{% endfor %}</dd></div>
+    <div><dt>Approved ports</dt><dd>{{ data.scope.approved_ports|join(', ') }}</dd></div>
+    <div><dt>Started</dt><dd>{{ data.assessment.started_at }}</dd></div>
+    <div><dt>Finished</dt><dd>{{ data.assessment.finished_at or 'In progress' }}</dd></div>
+  </dl>
+</section>
+
+<section class="section-block">
+  <div class="section-heading"><div><p class="eyebrow">MODULE EXECUTION</p><h2>Assessment modules</h2></div></div>
+  <div class="module-grid">
+    {% for module in data.module_runs %}
+      <article class="module-card">
+        <div class="module-card-top"><strong>{{ module.module_name|replace('_', ' ') }}</strong><span class="status-pill status-{{ module.status }}">{{ module.status }}</span></div>
+        {% if module.error_code %}<p class="muted">Recorded error: <code>{{ module.error_code }}</code></p>{% endif %}
+        <small>{{ module.observations_count }} observation(s)</small>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section-block">
+  <div class="section-heading"><div><p class="eyebrow">TCP ASSESSMENT</p><h2>Port observations</h2></div></div>
+  {% if data.port_results %}
+    <div class="table-wrap">
+      <table><thead><tr><th>Address</th><th>Port</th><th>State</th><th>Likely service</th><th>Result detail</th></tr></thead>
+        <tbody>{% for item in data.port_results %}
+          <tr><td>{{ item.ip_address }}</td><td>{{ item.port }}/TCP</td><td><span class="state state-{{ item.state }}">{{ item.state|replace('_', ' ') }}</span></td><td>{{ item.service_name or 'Not identified' }}</td><td>{{ item.error_code or item.identification_basis or 'Connection succeeded' }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+  {% else %}<div class="empty-inline">No TCP observations were recorded for this assessment.</div>{% endif %}
+</section>
+
+<section class="section-block">
+  <div class="section-heading"><div><p class="eyebrow">HTTP / HTTPS</p><h2>Web security observations</h2></div></div>
+  {% if data.web_results %}
+    <div class="table-wrap">
+      <table><thead><tr><th>Endpoint</th><th>Connected IP</th><th>HTTP</th><th>TLS</th><th>Outcome</th></tr></thead>
+        <tbody>{% for item in data.web_results %}
+          <tr><td>{{ item.requested_scheme }}://{{ item.requested_host }}:{{ item.port }}</td><td>{{ item.connected_ip or 'None' }}</td><td>{{ item.http_status or 'No response' }}</td><td>{{ item.tls_status }}</td><td>{{ item.error_code or 'Response received' }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+    <div class="observation-grid">
+      {% for item in data.web_results if item.headers or item.cookies %}
+        <article class="observation-card">
+          <h3>{{ item.requested_scheme }}://{{ item.requested_host }}:{{ item.port }}</h3>
+          {% if item.headers %}<p class="muted">Selected response headers:</p><ul>{% for header in item.headers %}<li><code>{{ header[0] }}</code>: {{ header[1] }}</li>{% endfor %}</ul>{% endif %}
+          {% if item.cookies %}<p class="cookie-note">{{ item.cookies|length }} cookie attribute record(s); cookie values are not stored or displayed.</p>{% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}<div class="empty-inline">No web observations were recorded for this assessment.</div>{% endif %}
+</section>
+
+<section class="section-block">
+  <div class="section-heading"><div><p class="eyebrow">RISK CLASSIFICATION</p><h2>Findings and recommendations</h2></div></div>
+  {% if data.findings %}
+    <div class="finding-list">
+      {% for finding in data.findings %}
+        <article class="finding-card finding-{{ finding.severity }}">
+          <div class="finding-card-head"><span class="status-pill status-{{ finding.severity }}">{{ finding.severity }}</span><span class="muted">{{ finding.confidence }} confidence</span></div>
+          <h3>{{ finding.title }}</h3><p>{{ finding.description }}</p>
+          <div class="finding-recommendation"><strong>Recommendation</strong><p>{{ finding.recommendation }}</p></div>
+          <details><summary>Evidence</summary><pre>{{ finding.evidence|tojson(indent=2) }}</pre></details>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}<div class="empty-inline">No findings were generated from the recorded observations.</div>{% endif %}
+</section>
+
+<div class="notice notice-info limitation-notice">
+  <span class="notice-icon" aria-hidden="true">i</span>
+  <div><strong>Interpretation limits</strong><p>Service labels are conventional port hints. A timeout is inconclusive, missing headers require application context, and findings are observations rather than proof of vulnerability or overall security.</p></div>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}JSON report {{ assessment_id }} | CyberAssess Local{% endblock %}
+{% block breadcrumb %}JSON REPORT{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">READ-ONLY REPORT</p><h1>JSON report</h1><p class="lede"><code>{{ assessment_id }}</code></p></div>
+  <a class="button button-secondary" href="{{ url_for('report_view', assessment_id=assessment_id) }}">Back to report</a>
+</div>
+<pre class="json-preview">{{ report_text }}</pre>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Findings | CyberAssess Local{% endblock %}
+{% block breadcrumb %}FINDINGS{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">OBSERVATION REGISTER</p><h1>Findings</h1><p class="lede">Risk-classified observations with evidence and recommendations.</p></div>
+</div>
+
+<div class="filter-row">
+  <a class="filter-chip {% if not selected_severity %}selected{% endif %}" href="{{ url_for('findings') }}">All severities</a>
+  {% for severity in severities %}
+    <a class="filter-chip filter-{{ severity }} {% if selected_severity == severity %}selected{% endif %}" href="{{ url_for('findings', severity=severity) }}">{{ severity|replace('_', ' ')|title }}</a>
+  {% endfor %}
+</div>
+
+{% if findings %}
+  <div class="finding-list">
+    {% for finding in findings %}
+      <article class="finding-card finding-{{ finding.severity }}">
+        <div class="finding-card-head"><span class="status-pill status-{{ finding.severity }}">{{ finding.severity }}</span><span class="muted">{{ finding.category|replace('_', ' ') }} / {{ finding.confidence }} confidence</span></div>
+        <h2>{{ finding.title }}</h2><p>{{ finding.description }}</p>
+        <div class="finding-meta"><span>Target: <strong>{{ finding.requested_target }}</strong></span><span>Recorded: {{ finding.created_at }}</span></div>
+        <div class="finding-recommendation"><strong>Recommendation</strong><p>{{ finding.recommendation }}</p></div>
+        <details><summary>Evidence</summary><pre>{{ finding.evidence|tojson(indent=2) }}</pre></details>
+        <a class="text-link" href="{{ url_for('assessment_result', assessment_id=finding.assessment_id) }}">Open assessment <span aria-hidden="true">&rarr;</span></a>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="empty-state"><span class="empty-mark" aria-hidden="true">--</span><h2>No findings in this view</h2><p>Only findings stored by completed or partial assessments appear here.</p></div>
+{% endif %}
+{% endblock %}

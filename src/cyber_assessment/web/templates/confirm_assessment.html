@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Confirm scope | CyberAssess Local{% endblock %}
+{% block breadcrumb %}SCOPE REVIEW{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">REVIEW BEFORE CONNECTING</p>
+    <h1>Confirm assessment scope</h1>
+    <p class="lede">No TCP, HTTP, or HTTPS assessment connection has been made. Review the validated scope below.</p>
+  </div>
+</div>
+
+{% if error %}<div class="flash flash-error" role="alert">{{ error }}</div>{% endif %}
+
+<section class="panel scope-summary-panel">
+  <div class="panel-heading"><span class="panel-kicker">SCOPE</span><div><h2>Validated destination</h2><p>This one-time scope expires in {{ expires_minutes }} minutes.</p></div></div>
+  <dl class="scope-details">
+    <div><dt>Original target</dt><dd>{{ scope.original_target }}</dd></div>
+    <div><dt>Canonical target</dt><dd>{{ scope.canonical_target }}</dd></div>
+    <div><dt>Resolved and approved IP addresses</dt><dd>{% for address in scope.approved_ips %}<span class="ip-chip">{{ address }}</span>{% endfor %}</dd></div>
+    <div><dt>Approved TCP ports</dt><dd>{{ scope.approved_ports|join(', ') }}</dd></div>
+    <div><dt>Selected methods</dt><dd>{{ methods|join(', ') }}</dd></div>
+    <div><dt>Restriction</dt><dd>Loopback addresses only; redirects are revalidated against the approved scope.</dd></div>
+  </dl>
+</section>
+
+<div class="notice notice-warning">
+  <span class="notice-icon" aria-hidden="true">!</span>
+  <div><strong>Assessment connections begin only after this confirmation.</strong><p>The scope above is already validated and will be passed to the existing assessment workflow without resolving the initial target again.</p></div>
+</div>
+
+<div class="confirm-grid">
+  <section class="panel">
+    <div class="panel-heading"><span class="panel-kicker">03</span><div><h2>Explicit authorization</h2><p>Confirm that you own or are authorized to assess this local target.</p></div></div>
+    <form method="post" action="{{ url_for('confirm_assessment', pending_token=pending_token) }}" class="form-stack" data-confirm-assessment>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="checkbox-label"><input type="checkbox" name="acknowledged" value="yes" required><span>I reviewed this exact target, address set, ports, and assessment methods.</span></label>
+      <label for="confirmation">Type <code>yes</code> to start</label>
+      <input id="confirmation" name="confirmation" type="text" inputmode="text" autocomplete="off" pattern="yes" maxlength="3" required>
+      <button class="button button-primary button-wide" type="submit">Start confirmed local assessment</button>
+    </form>
+  </section>
+  <form method="post" action="{{ url_for('cancel_assessment', pending_token=pending_token) }}" class="cancel-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="button button-secondary" type="submit">Cancel without connecting</button>
+  </form>
+</div>
+{% endblock %}

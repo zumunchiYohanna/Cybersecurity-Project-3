@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Report {{ assessment_id }} | CyberAssess Local{% endblock %}
+{% block breadcrumb %}REPORT VIEW{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">EXISTING ASSESSMENT REPORT</p><h1>Report preview</h1><p class="lede"><code>{{ assessment_id }}</code></p></div>
+  <a class="button button-secondary" href="{{ url_for('reports') }}">Back to reports</a>
+</div>
+<div class="report-actions">
+  {% if has_json %}<a class="button button-secondary" href="{{ url_for('view_json_report', assessment_id=assessment_id) }}">View JSON</a><a class="button button-primary" href="{{ url_for('download_report', assessment_id=assessment_id, extension='json') }}">Download JSON</a>{% endif %}
+  {% if has_html %}<a class="button button-secondary" href="{{ url_for('download_report', assessment_id=assessment_id, extension='html') }}">Download HTML</a>{% endif %}
+</div>
+{% if has_html %}
+  <div class="report-frame-wrap"><iframe title="Sandboxed HTML assessment report" src="{{ url_for('view_html_report', assessment_id=assessment_id) }}" sandbox="" referrerpolicy="no-referrer"></iframe></div>
+{% elif has_json %}
+  <div class="empty-inline">No HTML report exists for this assessment. Use View JSON to inspect the available report.</div>
+{% endif %}
+{% endblock %}

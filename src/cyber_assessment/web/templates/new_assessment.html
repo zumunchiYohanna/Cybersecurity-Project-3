@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}New assessment | CyberAssess Local{% endblock %}
+{% block breadcrumb %}NEW ASSESSMENT{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">CONTROLLED EXECUTION</p>
+    <h1>New assessment</h1>
+    <p class="lede">Choose an explicitly approved local target. The validated destination scope is shown before confirmation.</p>
+  </div>
+</div>
+
+{% if hosted_demo %}
+  <div class="notice notice-warning">
+    <span class="notice-icon" aria-hidden="true">!</span>
+    <div><strong>Assessments are disabled in the public demo.</strong><p>This page cannot submit targets or start network activity. Run the local application to assess an explicitly approved loopback target.</p></div>
+  </div>
+{% else %}
+{% if error %}
+  <div class="flash flash-error" role="alert">{{ error }}</div>
+{% endif %}
+
+<div class="assessment-layout">
+  <section class="panel">
+    <div class="panel-heading"><span class="panel-kicker">01</span><div><h2>Assessment scope</h2><p>Enter a host only; do not include a URL, path, or credentials.</p></div></div>
+    <form method="post" action="{{ url_for('preview_assessment') }}" class="form-stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="target">Target IP or hostname</label>
+      <input id="target" name="target" type="text" maxlength="253" autocomplete="off" placeholder="127.0.0.1 or localhost" value="{{ target_value }}" required>
+      <label for="method_mode">Assessment methods</label>
+      <select id="method_mode" name="method_mode">
+        <option value="all">TCP and web checks</option>
+        <option value="tcp">TCP checks only</option>
+        <option value="web">HTTP / HTTPS checks only</option>
+      </select>
+      <div class="scope-callout">
+        <strong>Protected execution sequence</strong>
+        <span>Target validation and resolution happen first. You will review the exact approved IPs, ports, methods, and loopback restrictions before any assessment connection.</span>
+      </div>
+      <button class="button button-primary button-wide" type="submit">Validate target and review scope <span aria-hidden="true">&rarr;</span></button>
+    </form>
+  </section>
+
+  <aside class="panel panel-muted">
+    <div class="panel-heading"><span class="panel-kicker">02</span><div><h2>Authorized targets</h2><p>Loaded from this project's validated allowlist.</p></div></div>
+    <div class="approved-target-list">
+      {% for rule in targets %}
+        <article class="approved-target">
+          <div class="approved-target-top"><strong>{{ rule.host }}</strong><span class="live-dot" aria-label="approved"></span></div>
+          <span class="approved-rule">{{ rule.rule_id }}</span>
+          <div class="approved-line"><span>Resolved IPs</span><strong>{{ rule.approved_ips|join(', ') }}</strong></div>
+          <div class="approved-line"><span>TCP ports</span><strong>{{ rule.ports|join(', ') }}</strong></div>
+          <div class="approved-line"><span>Methods</span><strong>{{ rule.methods|join(', ') }}</strong></div>
+        </article>
+      {% endfor %}
+    </div>
+    <div class="scope-warning"><strong>Restrictions</strong><p>Loopback addresses only. No public or university targets, exploitation, password attacks, brute force, or denial-of-service checks. TLS verification remains enabled.</p></div>
+  </aside>
+</div>
+{% endif %}
+{% endblock %}

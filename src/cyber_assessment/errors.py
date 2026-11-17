@@ -23,3 +23,7 @@ class ResolutionError(AssessmentError):
 
 class PersistenceError(AssessmentError):
     """Assessment data could not be saved or loaded."""
+
+
+class AssessmentNotFoundError(PersistenceError):
+    """A requested assessment ID is not present in the project database."""

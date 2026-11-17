@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: cybersecurity-project-3-demo
+    runtime: python
+    plan: free
+    buildCommand: python -m pip install -r requirements.txt
+    startCommand: gunicorn --chdir src --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 30 cyber_assessment.web.wsgi:app
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.10
+      - key: CYBER_ASSESSMENT_HOSTED_DEMO
+        value: "1"
+      - key: CYBER_ASSESSMENT_SECRET_KEY
+        generateValue: true
