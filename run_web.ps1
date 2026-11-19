@@ -17,7 +17,7 @@ if ([string]::IsNullOrWhiteSpace($previousPythonPath)) {
 
 Push-Location -LiteralPath $projectRoot
 try {
-    Write-Host "Starting CyberAssess Local at http://127.0.0.1:5000"
+    Write-Host "Starting ThreatLens Local at http://127.0.0.1:5000"
     Write-Host "The server is loopback-only. Press Ctrl+C to stop it."
     & $python -m cyber_assessment.web
     if ($LASTEXITCODE -ne 0) {

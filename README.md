@@ -1,4 +1,6 @@
-# Python-Based Network Reconnaissance and Vulnerability Assessment Tool
+# ThreatLens
+
+**ThreatLens — Network Discovery, Traffic Analysis and Security Assessment Platform.**
 
 This educational command-line application performs small, conservative checks against targets explicitly allowlisted in this project. **This initial implementation is hard-restricted to loopback addresses (`127.0.0.0/8` and `::1`)**, even if someone edits the configuration. It is not a scanner for university, public, or other network systems.
 

@@ -73,11 +73,11 @@ def render_html(payload: dict[str, Any]) -> str:
         "<!doctype html>",
         '<html lang="en"><head><meta charset="utf-8">',
         "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">",
-        "<title>Cybersecurity Assessment Report</title>",
+        "<title>ThreatLens — Network and Security Assessment Report</title>",
         "<style>body{font-family:system-ui,sans-serif;max-width:70rem;margin:2rem auto;padding:0 1rem}"
         "table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:.45rem;text-align:left}"
         ".notice{padding:.8rem;background:#fff3cd}</style></head><body>",
-        "<h1>Cybersecurity Assessment Report</h1>",
+        "<h1>ThreatLens — Network and Security Assessment Report</h1>",
         "<p class=\"notice\">Authorized localhost-only assessment. Findings are limited observations.</p>",
         "<h2>Assessment</h2><dl>",
     ]

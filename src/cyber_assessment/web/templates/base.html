@@ -4,16 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>{% block title %}Cybersecurity Assessment{% endblock %}</title>
+  <title>{% block title %}ThreatLens{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
 </head>
 <body>
   <div class="app-shell">
     <aside class="sidebar">
-      <a class="brand" href="{{ url_for('dashboard') }}" aria-label="Cybersecurity Assessment dashboard">
-        <span class="brand-mark" aria-hidden="true">CA</span>
-        <span><strong>CYBER<span>ASSESS</span></strong><small>{% if hosted_demo %}PUBLIC DEMONSTRATION{% else %}LOCAL SECURITY CONSOLE{% endif %}</small></span>
+      <a class="brand" href="{{ url_for('dashboard') }}" aria-label="ThreatLens dashboard">
+        <span class="brand-mark" aria-hidden="true">TL</span>
+        <span><strong>THREAT<span>LENS</span></strong><small>{% if hosted_demo %}PUBLIC DEMONSTRATION{% else %}SECURITY CONSOLE{% endif %}</small></span>
       </a>
       <div class="nav-label">WORKSPACE</div>
       <nav class="navigation" aria-label="Main navigation">
@@ -38,7 +38,7 @@
     <main class="main-content">
       <header class="topbar">
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu">Menu</button>
-        <div class="breadcrumb">CYBERASSESS <span>/</span> {% block breadcrumb %}OVERVIEW{% endblock %}</div>
+        <div class="breadcrumb">THREATLENS <span>/</span> {% block breadcrumb %}OVERVIEW{% endblock %}</div>
         <div class="topbar-status"><span class="live-dot" aria-hidden="true"></span> {% if hosted_demo %}PUBLIC DEMO{% else %}LOCAL CONSOLE{% endif %}</div>
       </header>
       <section id="mobile-menu" class="mobile-menu" hidden>
@@ -68,7 +68,7 @@
         {% block content %}{% endblock %}
       </div>
       <footer class="page-footer">
-        <span>CyberAssess {% if hosted_demo %}Public Demo{% else %}Local{% endif %}</span>
+        <span>ThreatLens {% if hosted_demo %}Public Demo{% else %}Local{% endif %}</span>
         <span>{% if hosted_demo %}Synthetic examples only; not observed security results.{% else %}Authorized loopback observations only. Results are not proof of vulnerability.{% endif %}</span>
       </footer>
     </main>

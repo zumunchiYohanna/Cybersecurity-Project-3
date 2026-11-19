@@ -59,6 +59,8 @@ class WebAppTests(unittest.TestCase):
     def test_dashboard_and_form_load_without_starting_assessment(self):
         dashboard = self.client.get("/")
         self.assertEqual(dashboard.status_code, 200)
+        self.assertIn(b"ThreatLens", dashboard.data)
+        self.assertIn(b"<title>Dashboard | ThreatLens</title>", dashboard.data)
         self.assertIn(b"Security overview", dashboard.data)
         self.assertIn(b"0", dashboard.data)
 
@@ -99,6 +101,8 @@ class WebAppTests(unittest.TestCase):
 
         dashboard = client.get("/", base_url=public_base, environ_base=public_address)
         self.assertEqual(dashboard.status_code, 200)
+        self.assertIn(b"ThreatLens", dashboard.data)
+        self.assertIn(b"<title>Dashboard | ThreatLens</title>", dashboard.data)
         self.assertIn(b"PUBLIC DEMO", dashboard.data)
         self.assertIn(b"SAMPLE DATA", dashboard.data)
         self.assertIn(b"demo.local", dashboard.data)
