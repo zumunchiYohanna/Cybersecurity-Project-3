@@ -236,6 +236,22 @@ class WebAppTests(unittest.TestCase):
                 source_asset.read_bytes(),
             )
 
+    def test_vercel_function_exclusions_fit_limit_and_keep_private_paths_excluded(self):
+        config = json.loads((PROJECT_ROOT / "vercel.json").read_text(encoding="utf-8"))
+        exclude_files = config["functions"]["app.py"]["excludeFiles"]
+        self.assertLessEqual(len(exclude_files), 256)
+        for protected_pattern in (
+            "data/**",
+            "reports/**",
+            "config/**",
+            "documentation/**",
+            "submission/**",
+            "**/*.db*",
+            "**/*.sqlite*",
+            "**/.env*",
+        ):
+            self.assertIn(protected_pattern, exclude_files)
+
     def test_unapproved_target_is_rejected_before_scope_resolution(self):
         self.client.get("/assessments/new")
         with patch("cyber_assessment.web.resolve_scope") as resolve_scope:
