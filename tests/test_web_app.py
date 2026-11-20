@@ -2,6 +2,7 @@ import importlib
 import json
 import os
 import re
+import runpy
 import sys
 import tempfile
 import unittest
@@ -63,6 +64,8 @@ class WebAppTests(unittest.TestCase):
         self.assertIn(b"<title>Dashboard | ThreatLens</title>", dashboard.data)
         self.assertIn(b"Security overview", dashboard.data)
         self.assertIn(b"0", dashboard.data)
+        self.assertIn(b'href="/static/css/app.css"', dashboard.data)
+        self.assertIn(b'src="/static/js/app.js"', dashboard.data)
 
         form = self.client.get("/assessments/new")
         self.assertEqual(form.status_code, 200)
@@ -179,6 +182,59 @@ class WebAppTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "requires hosted demo mode"):
                 importlib.import_module(module_name)
         self.assertNotIn(module_name, sys.modules)
+
+    def test_vercel_entry_point_fails_closed_and_uses_hosted_demo(self):
+        entry_point = PROJECT_ROOT / "app.py"
+        with patch.dict(
+            os.environ,
+            {"CYBER_ASSESSMENT_SECRET_KEY": "test-vercel-secret"},
+            clear=True,
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "requires CYBER_ASSESSMENT_HOSTED_DEMO=1"
+            ):
+                runpy.run_path(str(entry_point))
+
+        with patch.dict(
+            os.environ,
+            {"CYBER_ASSESSMENT_HOSTED_DEMO": "1"},
+            clear=True,
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError, "requires a non-empty CYBER_ASSESSMENT_SECRET_KEY"
+            ):
+                runpy.run_path(str(entry_point))
+
+        with patch.dict(
+            os.environ,
+            {
+                "CYBER_ASSESSMENT_HOSTED_DEMO": "1",
+                "CYBER_ASSESSMENT_SECRET_KEY": "test-vercel-secret",
+            },
+            clear=True,
+        ):
+            app = runpy.run_path(str(entry_point))["app"]
+
+        self.assertTrue(app.config["HOSTED_DEMO"])
+        self.assertNotIn("REPORTS_DIR", app.config)
+        self.assertNotIn("cyber_assessment.database", app.extensions)
+        client = app.test_client()
+        self.assertEqual(client.get("/healthz").json, {"mode": "demo", "status": "ok"})
+        dashboard = client.get("/")
+        self.assertEqual(dashboard.status_code, 200)
+        self.assertIn(b'href="/css/app.css"', dashboard.data)
+        self.assertIn(b'src="/js/app.js"', dashboard.data)
+        self.assertEqual(client.post("/assessments/preview").status_code, 404)
+        report_id = "00000000-0000-4000-8000-000000000001"
+        self.assertEqual(client.get(f"/reports/{report_id}/view").status_code, 404)
+        for asset in ("css/app.css", "js/app.js"):
+            source_asset = (
+                PROJECT_ROOT / "src" / "cyber_assessment" / "web" / "static" / asset
+            )
+            self.assertEqual(
+                (PROJECT_ROOT / "public" / asset).read_bytes(),
+                source_asset.read_bytes(),
+            )
 
     def test_unapproved_target_is_rejected_before_scope_resolution(self):
         self.client.get("/assessments/new")

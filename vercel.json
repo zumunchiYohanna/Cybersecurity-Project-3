@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "app.py": {
+      "includeFiles": "src/cyber_assessment/web/templates/**",
+      "excludeFiles": "{.venv/**,.git/**,tests/**,documentation/**,submission/**,data/**,reports/**,config/**,src/cyber_assessment/web/static/**,**/__pycache__/**,**/*.pyc,**/*.db,**/*.db-*,**/*.sqlite,**/*.sqlite3,**/*.zip,**/.env,**/.env.*,Cybersecurity_Project_3_Final_Submission.zip}"
+    }
+  }
+}

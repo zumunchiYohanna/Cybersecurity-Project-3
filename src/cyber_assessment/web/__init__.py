@@ -284,7 +284,15 @@ def create_app(
 
     @app.context_processor
     def inject_display_mode():
-        return {"hosted_demo": hosted_demo}
+        def static_asset_url(filename: str) -> str:
+            if hosted_demo:
+                return f"/{filename.lstrip('/')}"
+            return url_for("static", filename=filename)
+
+        return {
+            "hosted_demo": hosted_demo,
+            "static_asset_url": static_asset_url,
+        }
 
     def csrf_token() -> str:
         token = session.get("_csrf_token")

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>{% block title %}ThreatLens{% endblock %}</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
-  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <link rel="stylesheet" href="{{ static_asset_url('css/app.css') }}">
+  <script src="{{ static_asset_url('js/app.js') }}" defer></script>
 </head>
 <body>
   <div class="app-shell">

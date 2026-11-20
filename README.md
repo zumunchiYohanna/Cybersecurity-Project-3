@@ -133,6 +133,28 @@ Render start command:
 gunicorn --chdir src --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 30 cyber_assessment.web.wsgi:app
 ```
 
+## Public demonstration on Vercel
+
+Vercel uses the root [`app.py`](app.py) entry point and the Python version in [`.python-version`](.python-version). The entry point refuses to load unless hosted-demo mode is enabled and a session secret is configured. This is intentionally a **read-only, synthetic-data demonstration**: it does not initialize the SQLite database, load local reports or configuration, or permit assessments. The existing local application and Render deployment remain unchanged.
+
+The deployment includes the templates and the public CSS/JavaScript assets only; `.vercelignore` and the function bundle exclusions omit local data, reports, active configuration, documentation, tests, and generated archives. In hosted mode, the application links to Vercel's root-level `public/` assets. Local mode continues using Flask's existing static route.
+
+To configure Vercel:
+
+1. Import the existing `zumunchiYohanna/Cybersecurity-Project-3` repository and set its **Root Directory** to the repository root.
+2. Use Python framework/runtime detection and keep the repository's `requirements.txt`; the project selects Python 3.14, one of Vercel's supported versions.
+3. In **Settings > Environment Variables**, set `CYBER_ASSESSMENT_HOSTED_DEMO` to `1` for **Production** and **Preview**.
+4. Add `CYBER_ASSESSMENT_SECRET_KEY` for **Production** and **Preview** with a newly generated, high-entropy secret. Generate it locally without committing or sharing it, for example:
+
+   ```powershell
+   .\.venv\Scripts\python.exe -c "import secrets; print(secrets.token_urlsafe(48))"
+   ```
+
+   Enter the generated value directly in Vercel's environment-variable form. Do not place it in source control or a public project file. Do not set the hosted-demo flag to `0` in a Vercel environment.
+5. Redeploy after saving environment variables. Verify `/healthz` returns `{"mode":"demo","status":"ok"}` and the dashboard clearly shows **PUBLIC DEMO** and **SAMPLE DATA**. Assessment POST actions should remain disabled.
+
+If either required setting is missing, the Vercel entry point raises an error rather than falling back to local assessment mode. Vercel's Python support and Flask entry-point guidance can change; confirm the current requirements in the [Flask deployment guide](https://vercel.com/docs/frameworks/backend/flask), [Python runtime documentation](https://vercel.com/docs/functions/runtimes/python), and [`vercel.json` configuration reference](https://vercel.com/docs/project-configuration/vercel-json) before deploying.
+
 ## Local data and reports
 
 - SQLite database: `data\cybersecurity_assessment.db` (created on first confirmed local run).
